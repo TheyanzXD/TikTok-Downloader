@@ -412,37 +412,109 @@ p { color: var(--text-secondary); }
 
 .result-card__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  width: 100%;
   gap: var(--space-3);
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
 }
 
 .btn-download {
-  display: inline-flex;
+  position: relative;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  background: var(--accent);
-  color: #000000;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4) var(--space-6);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
   font-weight: 600;
-  border-radius: var(--radius-md);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+  font-size: 1rem;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: all var(--transition-base);
+}
+
+[data-theme="light"] .btn-download {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #1A1A1A;
+}
+
+/* Shimmer Light Effect Animation */
+.btn-download::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: left 0.7s ease;
+}
+
+.btn-download:hover::before {
+  left: 140%;
 }
 
 .btn-download:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow-cyan);
+  transform: translateY(-3px) scale(1.01);
+  border-color: var(--primary);
+  box-shadow: 0 8px 25px rgba(254, 44, 85, 0.35), var(--shadow-glow-red);
+}
+
+.btn-download:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* Variant Glass Buttons */
+.btn-download--primary {
+  background: linear-gradient(135deg, rgba(254, 44, 85, 0.25) 0%, rgba(217, 35, 72, 0.4) 100%);
+  border-color: rgba(254, 44, 85, 0.4);
+}
+
+.btn-download--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(254, 44, 85, 0.45) 0%, rgba(217, 35, 72, 0.6) 100%);
+  border-color: var(--primary-light);
+}
+
+.btn-download--hd {
+  background: linear-gradient(135deg, rgba(37, 244, 238, 0.15) 0%, rgba(27, 196, 190, 0.3) 100%);
+  border-color: rgba(37, 244, 238, 0.35);
+}
+
+.btn-download--hd:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(37, 244, 238, 0.35) 0%, rgba(27, 196, 190, 0.5) 100%);
+  border-color: var(--accent);
+  box-shadow: 0 8px 25px rgba(37, 244, 238, 0.35), var(--shadow-glow-cyan);
+}
+
+.btn-download--audio {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.3) 100%);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.btn-download--audio:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.35) 0%, rgba(37, 99, 235, 0.5) 100%);
+  border-color: var(--info);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
 }
 
 .btn-download:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: wait;
-}
-
-.btn-audio {
-  background: var(--primary-light);
-  color: #FFFFFF;
+  animation: pulse 1.5s infinite;
 }
 
 .btn-audio:hover:not(:disabled) {

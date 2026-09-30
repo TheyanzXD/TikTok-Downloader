@@ -177,19 +177,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (downloads.noWatermark) {
       downloadsHtml += `
-        <button class="btn-download btn-download-trigger" data-url="${escapeHtml(downloads.noWatermark)}" data-filename="${safeTitle}.mp4">
+        <button class="btn-download btn-download--primary btn-download-trigger" data-url="${escapeHtml(downloads.noWatermark)}" data-filename="${safeTitle}.mp4">
           📥 Download Video (No Watermark)
         </button>`;
     }
     if (downloads.hd) {
       downloadsHtml += `
-        <button class="btn-download btn-download-trigger" data-url="${escapeHtml(downloads.hd)}" data-filename="${safeTitle}-hd.mp4">
+        <button class="btn-download btn-download--hd btn-download-trigger" data-url="${escapeHtml(downloads.hd)}" data-filename="${safeTitle}-hd.mp4">
           ✨ Download HD Video
         </button>`;
     }
     if (downloads.audio) {
       downloadsHtml += `
-        <button class="btn-download btn-download-trigger btn-audio" data-url="${escapeHtml(downloads.audio)}" data-filename="${safeTitle}.mp3">
+        <button class="btn-download btn-download--audio btn-download-trigger" data-url="${escapeHtml(downloads.audio)}" data-filename="${safeTitle}.mp3">
           🎵 Download Audio (MP3)
         </button>`;
     }
