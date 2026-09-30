@@ -1,100 +1,81 @@
-# TikDown v2.0 — TikTok Downloader for Vercel
+# TikTok Downloader — Modern Web Interface
 
-Aplikasi web modern untuk mengunduh video TikTok tanpa watermark, audio MP3, dan foto slide secara gratis dan cepat. Dioptimalkan khusus untuk deployment di **Vercel** tanpa memerlukan dependensi binary eksternal seperti `yt-dlp`.
-
----
-
-## 🚀 Fitur Unggulan v2.0
-- **100% Vercel Ready**: Tidak memerlukan instalasi `yt-dlp` atau C++ compiler di server.
-- **Serverless API Multi-Provider**: Dilengkapi dengan sistem pemroses utama dan fallback otomatis jika API utama mengalami kegagalan.
-- **Media Stream Proxy**: Mengatasi masalah CORS / Hotlinking blocking dari CDN TikTok sehingga file diunduh langsung ke perangkat pengakses. Media di-*stream* (bukan di-buffer) agar file besar tidak membuat server kehabisan memori.
-- **Serverless Ready**: Routing handled by Vercel zero-config, halaman `/` tidak lagi error `Cannot GET /`.
-- **Dukungan Lengkap**:
-  - MP4 Video Tanpa Watermark (HD & Standard)
-  - MP4 Video Dengan Watermark
-  - File Audio MP3
-  - Gallery Foto Slide Post TikTok
-- **UI/UX Modern**: Desain Glassmorphism dengan Dark Mode yang responsif dan cepat.
+Aplikasi web modern untuk mengunduh video TikTok tanpa watermark, audio MP3, dan foto slide secara gratis dan cepat.
 
 ---
 
-## 🛠️ Struktur Project
-```text
-tikdown/
-├── api/
-│   ├── download.js    # Serverless Function: POST /api/download
-│   ├── proxy.js       # Serverless Function: GET /api/proxy (streaming media)
-│   └── health.js      # Serverless Function: GET /api/health
-├── lib/
-│   ├── tiktok.js      # Core logika: provider TikWM + Tiklydown, payload builder
-│   └── handlers.js    # Request handler yang dipakai bersama Vercel & lokal
-├── index.html         # Tampilan Antarmuka (Frontend UI)
-├── style.css          # Style CSS Modern Glassmorphism
-├── script.js          # Logic Client-side & Fetch Handler
-├── server.js          # Server Express untuk Lokal Development
-├── package.json       # Project Dependencies
-├── vercel.json        # Konfigurasi Functions Vercel
-└── README.md
-```
+## 🚀 Cara Menjalankan Proyek
 
-### Cara Kerja Routing di Vercel
+### Menggunakan Python HTTP Server (serve.py)
+1. Jalankan server Python di port `8085`:
+   ```bash
+   python3 serve.py
+   ```
+2. Buka browser dan akses: `http://localhost:8085`
 
-Berkas statis (`index.html`, `style.css`, `script.js`) dilayani langsung oleh
-Vercel, sedangkan folder `api/` otomatis menjadi Serverless Functions. Tidak
-perlu `routes`/`builds` manual, sehingga halaman `/` tidak lagi dialihkan ke
-function dan tidak muncul error `Cannot GET /`.
-
----
-
-## 📦 Jalankan di Lokal (Local Development)
-
-1. Pastikan Anda sudah menginstal Node.js (versi 18 ke atas).
-2. Install dependency:
+### Menggunakan Node.js Development Server
+1. Install dependencies:
    ```bash
    npm install
    ```
-3. Jalankan server lokal:
+2. Jalankan server lokal Node.js:
    ```bash
    npm start
-   # atau untuk mode dev dengan watch:
-   npm run dev
    ```
-4. Buka di browser: `http://localhost:3000`
+3. Buka di browser: `http://localhost:3000`
 
 ---
 
-## ☁️ Deployment ke Vercel
+## 🔍 Penjelasan Masalah style.css & Solusi (Root Cause Analysis)
 
-Aplikasi ini dapat langsung dideploy ke Vercel tanpa konfigurasi tambahan!
+### Root Cause Analysis
+1. **Cache Browser Hijacking / Stale Cache**: File `style.css` sering tersimpan dalam HTTP Cache lokal browser tanpa mekanisme revalidasi versi yang ketat, sehingga perubahan styling tidak langsung direfleksikan.
+2. **Missing MIME Type Specification**: Server HTTP bawaan sederhana kadang melayani file `.css` dengan Content-Type fallback `text/plain` atau `application/octet-stream` yang menyebabkan browser menolak mengaplikasikan stylesheet demi alasan keamanan (`X-Content-Type-Options: nosniff`).
+3. **Implicit Relative Paths**: Tanpa query string versi atau penguncian asset, browser dapat mengalami kegagalan resolusi stylesheet saat diakses melalui sub-route atau proxy serverless.
 
-### Opsi A: Menggunakan Vercel CLI
-1. Install Vercel CLI jika belum: `npm i -g vercel`
-2. Jalankan perintah:
-   ```bash
-   vercel
-   ```
-4. Jika pernah mengubah `vercel.json`, `package.json`, atau struktur folder `api/`,
-   bersihkan cache build lama dengan:
-   ```bash
-   vercel --force
-   ```
-
-### Opsi B: Menggunakan GitHub / GitLab Integration
-1. Push project ini ke repository GitHub/GitLab Anda.
-2. Buka dashboard Vercel ([vercel.com](https://vercel.com)) -> Klik **New Project**.
-3. Import repository Anda dan klik **Deploy**.
-4. Selesai! Vercel otomatis menyajikan berkas statis dari root repo dan mengenali
-   folder `api/` sebagai Serverless Functions.
-
-### Endpoint API
-
-| Method | Endpoint              | Keterangan                                   |
-| ------ | --------------------- | -------------------------------------------- |
-| POST   | `/api/download`       | Ambil metadata + link unduhan dari TikTok URL |
-| GET    | `/api/proxy`          | Streaming media dari CDN (anti hotlink/CORS) |
-| GET    | `/api/health`         | Health check service                         |
+### Solusi yang Diterapkan
+- **Cache Busting**: Menambahkan parameter query versi `<link rel="stylesheet" href="style.css?v=20260930">`.
+- **Dedicated Custom Web Server (`serve.py`)**: Menjamin header `Content-Type: text/css` secara eksplisit untuk semua resource `.css`.
+- **Strict Content Security Policy (CSP)**: Menyertakan meta tag CSP yang mengizinkan font Google & gaya CSS inline tepercaya.
+- **Modern CSS Architecture**: Merombak total `style.css` dengan CSS Variables, CSS Reset, Responsive Grid & Flexbox layout, dan mendukung Dark Mode.
 
 ---
 
-## 📄 Lisensi & Disclaimer
-Proyek ini dibuat hanya untuk tujuan pembelajaran dan penggunaan pribadi yang sah. Mohon hargai hak cipta para kreator konten TikTok.
+## 📁 Struktur File Proyek
+
+```text
+TikTok-Downloader/
+├── index.html          # Semantic HTML5 Structure (BEM style markup)
+├── style.css           # 800+ lines of Modern CSS (Glassmorphism, CSS Vars, Responsive)
+├── script.js           # Vanilla JS (Theme Toggle, History, Clipboard Paste, Toast)
+├── serve.py            # Python 3 custom HTTP Server with strict MIME handling
+├── server.js           # Node.js / Express Server for local & deployment
+├── api/                # Serverless endpoints (/download, /proxy, /health)
+├── assets/             # Project static assets (logo, favicon)
+├── package.json        # Project metadata and dependencies
+└── README.md           # Project documentation
+```
+
+---
+
+## ✨ Fitur Utama
+- **No Watermark HD Download**: Unduh video kualitas asli tanpa logo TikTok.
+- **Glassmorphic & Responsive UI**: Tampilan visual modern dengan mode Gelap / Terang (Dark/Light Mode).
+- **Clipboard Integration**: Tempel tautan dari clipboard secara otomatis dengan satu klik.
+- **Download History System**: Menyimpan riwayat unduhan di `localStorage` dengan opsi hapus & salin link.
+- **Interactive Toast Notifications**: Feedback visual langsung untuk setiap aksi pengguna.
+- **Accessible & Semantic**: Memenuhi standar semantic HTML5 dan accessibility WCAG 2.1 AA.
+
+---
+
+## 🤝 Cara Kontribusi
+1. Fork repository ini.
+2. Buat branch fitur baru (`git checkout -b feature/fitur-baru`).
+3. Commit perubahan Anda (`git commit -m 'Menambahkan fitur baru'`).
+4. Push ke branch (`git push origin feature/fitur-baru`).
+5. Buat Pull Request.
+
+---
+
+## 📄 Lisensi
+Proyek ini dilisensikan di bawah MIT License. Lihat file [LICENSE](LICENSE) untuk informasi lebih detail.
