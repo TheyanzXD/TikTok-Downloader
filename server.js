@@ -25,9 +25,13 @@ app.all("/api/health", handleHealth);
 // Serve static files (index.html, style.css, script.js, assets)
 app.use(express.static(publicPath, { extensions: ["html"] }));
 
-// Fallback to index.html
+// Fallback to index.html ONLY for HTML/page requests (not for missing static assets like .css / .js / images)
 app.use((req, res) => {
-  res.status(404).sendFile(path.join(publicPath, "index.html"));
+  if (req.accepts('html')) {
+    res.status(404).sendFile(path.join(publicPath, "index.html"));
+    return;
+  }
+  res.status(404).send('Not Found');
 });
 
 const PORT = process.env.PORT || 3000;
