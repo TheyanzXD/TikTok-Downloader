@@ -99,30 +99,20 @@ document.addEventListener('DOMContentLoaded', () => {
     resultContainer.innerHTML = '';
 
     try {
-      let data;
-      try {
-        const response = await fetch('/api/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
-        });
-        if (!response.ok) throw new Error('Backend request failed');
-        data = await response.json();
-      } catch (err) {
-        // Fallback Mock Response if backend server endpoint fails or is un-mocked
-        console.warn('Backend unavailable, using fallback response', err);
-        data = {
-          success: true,
-          title: 'Awesome TikTok Video (No Watermark)',
-          author: '@tiktok_user',
-          cover: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=500&auto=format&fit=crop',
-          downloadUrl: url
-        };
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Failed to resolve TikTok URL');
       }
 
       renderResult(data);
       saveToHistory(url, data.title || 'TikTok Video');
-      showToast('Video processed successfully!', 'success');
+      showToast('Media ready for download!', 'success');
     } catch (error) {
       showToast(error.message || 'An unexpected error occurred', 'error');
     } finally {
@@ -136,33 +126,124 @@ document.addEventListener('DOMContentLoaded', () => {
     if (spinner) spinner.hidden = !isLoading;
   }
 
+  // Direct Blob Trigger File Download
+  async function triggerDirectDownload(proxyUrl, filename, buttonEl) {
+    if (!proxyUrl) return;
+
+    const originalText = buttonEl.innerHTML;
+    buttonEl.disabled = true;
+    buttonEl.innerHTML = `<span>⏳ Downloading...</span>`;
+
+    try {
+      showToast('Starting file download...', 'info');
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = filename || 'tiktok-download.mp4';
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+        a.remove();
+      }, 100);
+
+      showToast('Download completed successfully!', 'success');
+    } catch (err) {
+      console.error('Direct download error:', err);
+      showToast('Proxy download failed, trying fallback direct link...', 'warning');
+      window.open(proxyUrl, '_blank');
+    } finally {
+      buttonEl.disabled = false;
+      buttonEl.innerHTML = originalText;
+    }
+  }
+
   // Render Result Card
   function renderResult(data) {
     resultContainer.hidden = false;
+    const authorName = data.uploader?.name || data.author || 'TikTok User';
+    const authorHandle = data.uploader?.username ? `@${data.uploader.username}` : '';
+    const downloads = data.downloads || {};
+    const safeTitle = (data.title || 'tiktok-download').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
+
+    let downloadsHtml = '';
+
+    if (downloads.noWatermark) {
+      downloadsHtml += `
+        <button class="btn-download btn-download-trigger" data-url="${escapeHtml(downloads.noWatermark)}" data-filename="${safeTitle}.mp4">
+          📥 Download Video (No Watermark)
+        </button>`;
+    }
+    if (downloads.hd) {
+      downloadsHtml += `
+        <button class="btn-download btn-download-trigger" data-url="${escapeHtml(downloads.hd)}" data-filename="${safeTitle}-hd.mp4">
+          ✨ Download HD Video
+        </button>`;
+    }
+    if (downloads.audio) {
+      downloadsHtml += `
+        <button class="btn-download btn-download-trigger btn-audio" data-url="${escapeHtml(downloads.audio)}" data-filename="${safeTitle}.mp3">
+          🎵 Download Audio (MP3)
+        </button>`;
+    }
+
+    if (downloads.images && downloads.images.length > 0) {
+      downloadsHtml += `<div class="result-card__images-grid">`;
+      downloads.images.forEach((imgObj, idx) => {
+        const imgUrl = typeof imgObj === 'string' ? imgObj : imgObj.downloadUrl;
+        downloadsHtml += `
+          <div class="result-card__image-item">
+            <img src="${typeof imgObj === 'string' ? imgObj : imgObj.url}" alt="Slide ${idx + 1}" loading="lazy">
+            <button class="btn-download btn-download-trigger btn-sm" data-url="${escapeHtml(imgUrl)}" data-filename="${safeTitle}-slide-${idx + 1}.jpg">
+              📥 Slide ${idx + 1}
+            </button>
+          </div>`;
+      });
+      downloadsHtml += `</div>`;
+    }
+
     resultContainer.innerHTML = `
       <div class="result-card">
         ${data.cover ? `<img class="result-card__media" src="${data.cover}" alt="Video Thumbnail">` : ''}
         <div class="result-card__info">
-          <h3 class="result-card__title">${escapeHtml(data.title || 'TikTok Video')}</h3>
-          <p class="result-card__author">${escapeHtml(data.author || 'Creator')}</p>
+          <h3 class="result-card__title">${escapeHtml(data.title || 'TikTok Media')}</h3>
+          <p class="result-card__author">${escapeHtml(authorName)} ${escapeHtml(authorHandle)}</p>
         </div>
         <div class="result-card__actions">
-          <a class="btn-download" href="${data.downloadUrl || '#'}" target="_blank" rel="noopener">
-            📥 Download Video (HD)
-          </a>
+          ${downloadsHtml}
         </div>
       </div>
     `;
+
+    // Attach Click Event Listeners to Download Triggers
+    resultContainer.querySelectorAll('.btn-download-trigger').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const targetBtn = e.currentTarget;
+        const proxyUrl = targetBtn.getAttribute('data-url');
+        const filename = targetBtn.getAttribute('data-filename');
+        triggerDirectDownload(proxyUrl, filename, targetBtn);
+      });
+    });
   }
 
-  // LocalStorage History Management
+  // LocalStorage History Management (Auto-cleans items older than 24 hours, cannot be manually deleted)
+  const HISTORY_AUTO_CLEAN_MS = 24 * 60 * 60 * 1000; // 24 Hours
+
   function saveToHistory(url, title) {
     const history = getHistory();
     const newItem = {
       id: Date.now().toString(),
       url,
       title,
-      date: new Date().toLocaleDateString()
+      timestamp: Date.now(),
+      date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     const updated = [newItem, ...history.filter(i => i.url !== url)].slice(0, 10);
     localStorage.setItem('download_history', JSON.stringify(updated));
@@ -171,7 +252,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getHistory() {
     try {
-      return JSON.parse(localStorage.getItem('download_history')) || [];
+      const raw = JSON.parse(localStorage.getItem('download_history')) || [];
+      const now = Date.now();
+      // System Auto-Clean: Filter out items older than 24 hours automatically
+      const validItems = raw.filter(item => item.timestamp && (now - item.timestamp < HISTORY_AUTO_CLEAN_MS));
+      if (validItems.length !== raw.length) {
+        localStorage.setItem('download_history', JSON.stringify(validItems));
+      }
+      return validItems;
     } catch {
       return [];
     }
@@ -182,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!historyList) return;
 
     if (history.length === 0) {
-      historyList.innerHTML = '<p class="history__empty">No downloads yet. Paste a TikTok URL above to get started.</p>';
+      historyList.innerHTML = '<p class="history__empty">No active downloads in history. Downloaded items auto-expire after 24h.</p>';
       return;
     }
 
@@ -190,43 +278,22 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="history__item" data-id="${item.id}">
         <div class="history__item-info">
           <span class="history__item-url">${escapeHtml(item.title || item.url)}</span>
-          <span class="history__item-date">${item.date}</span>
+          <span class="history__item-date">Downloaded at ${item.date} • Auto-expires in 24h</span>
         </div>
         <div class="history__item-actions">
-          <button class="btn-icon btn-copy" data-url="${escapeHtml(item.url)}" title="Copy Link">📋</button>
-          <button class="btn-icon btn-delete" data-id="${item.id}" title="Delete Item">🗑️</button>
+          <button class="btn-icon btn-copy" data-url="${escapeHtml(item.url)}" title="Copy TikTok Link">📋</button>
         </div>
       </div>
     `).join('');
 
-    // Attach Event Delegation
+    // Attach Copy Event Delegation
     historyList.querySelectorAll('.btn-copy').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const link = e.currentTarget.getAttribute('data-url');
         navigator.clipboard.writeText(link);
-        showToast('Link copied to clipboard!', 'info');
+        showToast('TikTok link copied to clipboard!', 'info');
       });
     });
-
-    historyList.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = e.currentTarget.getAttribute('data-id');
-        deleteHistoryItem(id);
-      });
-    });
-  }
-
-  function deleteHistoryItem(id) {
-    const history = getHistory().filter(item => item.id !== id);
-    localStorage.setItem('download_history', JSON.stringify(history));
-    loadHistory();
-    showToast('History item deleted', 'info');
-  }
-
-  function clearHistory() {
-    localStorage.removeItem('download_history');
-    loadHistory();
-    showToast('History cleared', 'info');
   }
 
   // Toast System
