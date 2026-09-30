@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Download TikTok videos without watermark. Fast, free, and no registration required.">
+  <meta name="theme-color" content="#FE2C55">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; connect-src 'self' https:;">
+  <title>TikTok Downloader — No Watermark, HD Quality</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20260930">
+</head>
+<body>
+  <header class="header">
+    <div class="header__logo">
+      <img src="assets/logo.png" alt="TikTok Downloader Logo" width="32" height="32">
+      <span>TikTok Downloader</span>
+    </div>
+    <nav class="header__nav" aria-label="Main navigation">
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="https://github.com/NoyaUber/TikTok-Downloader" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <button class="header__theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+  </header>
+
+  <main class="main">
+    <section class="hero" id="home">
+      <h1 class="hero__title">Download TikTok Videos Without Watermark</h1>
+      <p class="hero__subtitle">Fast, free, and no registration required.</p>
+    </section>
+
+    <section class="downloader" id="about">
+      <form class="downloader__form" id="downloadForm">
+        <div class="downloader__input-group">
+          <input type="url" class="downloader__input" id="urlInput" placeholder="Paste TikTok URL here..." required aria-label="TikTok URL">
+          <button type="button" class="downloader__paste-btn" id="pasteBtn" aria-label="Paste from clipboard">📋</button>
+        </div>
+        <button type="submit" class="downloader__submit-btn" id="submitBtn">
+          <span>Download</span>
+          <span class="downloader__spinner" id="spinner" hidden>⏳</span>
+        </button>
+      </form>
+      <p class="downloader__helper">Supports TikTok videos, photos, and stories.</p>
+
+      <div class="downloader__result" id="resultContainer" hidden></div>
+    </section>
+
+    <section class="features">
+      <article class="feature-card">
+        <div class="feature-card__icon">📱</div>
+        <h3 class="feature-card__title">HD Quality</h3>
+        <p class="feature-card__desc">Download in original quality, up to 4K.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-card__icon">🚫</div>
+        <h3 class="feature-card__title">No Watermark</h3>
+        <p class="feature-card__desc">Get clean videos without the TikTok logo.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-card__icon">⚡</div>
+        <h3 class="feature-card__title">Fast Speed</h3>
+        <p class="feature-card__desc">Download in seconds with our optimized engine.</p>
+      </article>
+    </section>
+
+    <section class="history" id="history">
+      <div class="history__header">
+        <h2>Recent Downloads</h2>
+        <button type="button" class="history__clear-btn" id="clearHistoryBtn">Clear History</button>
+      </div>
+      <div class="history__list" id="historyList">
+        <p class="history__empty">No downloads yet. Paste a TikTok URL above to get started.</p>
+      </div>
+    </section>
+
+    <section class="faq">
+      <h2>Frequently Asked Questions</h2>
+      <details class="faq__item">
+        <summary>Is this tool free to use?</summary>
+        <p>Yes, completely free. No hidden fees or registration required.</p>
+      </details>
+      <details class="faq__item">
+        <summary>Do you store my downloaded videos?</summary>
+        <p>No, all processing happens client-side. We don't store any videos.</p>
+      </details>
+      <details class="faq__item">
+        <summary>Can I download private videos?</summary>
+        <p>No, only publicly available videos can be downloaded.</p>
+      </details>
+      <details class="faq__item">
+        <summary>What formats are supported?</summary>
+        <p>MP4 for videos and JPG for photos.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 TikTok Downloader. All rights reserved.</p>
+    <nav class="footer__links" aria-label="Footer navigation">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+      <a href="#">Contact</a>
+    </nav>
+  </footer>
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+</html>
